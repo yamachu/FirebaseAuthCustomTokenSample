@@ -9,6 +9,8 @@ using Microsoft.Extensions.Options;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Example.Function.Configurations;
+using Example.Function.Helpers;
+using Example.Function.Infrastructures;
 
 [assembly: FunctionsStartup(typeof(Example.Function.Startup))]
 namespace Example.Function
@@ -35,8 +37,29 @@ namespace Example.Function
 			{
 				Credential = GoogleCredential.FromStream(stream)
 			});
+			var projectId = ((ServiceAccountCredential)adminApp.Options.Credential.UnderlyingCredential).ProjectId;
+			var firebaseAdminAuthHandler = new FirebaseAuthenticateHttpClientHandler(
+				new AsyncLazy<string>(() => adminApp.Options.Credential.UnderlyingCredential.GetAccessTokenForRequestAsync())
+			);
+
+			builder.Services.AddHttpClient(nameof(AuthTemporaryClient), c =>
+			{
+				c.BaseAddress = new Uri($"https://firestore.googleapis.com/v1/projects/{projectId}/databases/(default)/documents/");
+			}).ConfigurePrimaryHttpMessageHandler(() => firebaseAdminAuthHandler);
+			builder.Services.AddHttpClient(nameof(CustomProviderRepositoryClient), c =>
+			{
+				c.BaseAddress = new Uri($"https://firestore.googleapis.com/v1/projects/{projectId}/databases/(default)/documents/");
+			}).ConfigurePrimaryHttpMessageHandler(() => firebaseAdminAuthHandler);
+			builder.Services.AddHttpClient(nameof(LineClient), c =>
+			{
+				c.BaseAddress = new Uri("https://api.line.me/");
+			});
 
 			builder.Services.AddSingleton<IConfiguration>(config);
+
+			builder.Services.AddSingleton<ILineClient, LineClient>();
+			builder.Services.AddSingleton<IAuthTemporaryClient, AuthTemporaryClient>();
+			builder.Services.AddSingleton<ICustomProviderRepositoryClient, CustomProviderRepositoryClient>();
 
 			builder.Services
 				.AddOptions<LineConfig>()
