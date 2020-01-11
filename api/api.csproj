@@ -22,4 +22,10 @@
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Content Remove="Resources\firebase-adminsdk.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\firebase-adminsdk.json" />
+  </ItemGroup>
 </Project>
