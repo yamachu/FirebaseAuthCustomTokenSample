@@ -11,6 +11,7 @@ using Google.Apis.Auth.OAuth2;
 using Example.Function.Configurations;
 using Example.Function.Helpers;
 using Example.Function.Infrastructures;
+using Example.Function.Services;
 
 [assembly: FunctionsStartup(typeof(Example.Function.Startup))]
 namespace Example.Function
@@ -60,6 +61,9 @@ namespace Example.Function
 			builder.Services.AddSingleton<ILineClient, LineClient>();
 			builder.Services.AddSingleton<IAuthTemporaryClient, AuthTemporaryClient>();
 			builder.Services.AddSingleton<ICustomProviderRepositoryClient, CustomProviderRepositoryClient>();
+
+			builder.Services.AddTransient<ILineService, LineService>();
+			builder.Services.AddTransient<IFirebaseService, FirebaseService>();
 
 			builder.Services
 				.AddOptions<LineConfig>()
