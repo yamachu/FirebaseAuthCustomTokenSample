@@ -39,7 +39,7 @@ namespace Example.Function
 				from token in ParseAuthorizationToken(req)
 				let authTemp = AuthTemporary.GenerateRandomAuthTemporary()
 				from _ in TryAsync(() => _authTempClient.StoreAuthTemporary(token.Uid, authTemp).ToUnit())
-					.ToEither(/* Todo: map exception */).ToAsync()
+					.ToEither(e => e.Exception.IfNone(new Exception(e.Message)))
 				let url = _lineService.GetAuthorizeRequestURL(authTemp)
 				select url
 			).Case.ConfigureAwait(false) switch
@@ -62,17 +62,19 @@ namespace Example.Function
 				{
 					using var sr = new StreamReader(req.Body);
 					return sr.ReadToEndAsync();
-				}).ToEither().ToAsync()
+				}).ToEither(e => e.Exception.IfNone(new Exception(e.Message)))
 				from json in Try(() => System.Text.Json.JsonSerializer.Deserialize<LineTokenRequest>(requestBody, new System.Text.Json.JsonSerializerOptions
 				{
 					PropertyNameCaseInsensitive = true
 				})).ToEither((e) => new Exception("invalid json object", e)).ToAsync()
-				from authTemp in TryAsync(() => _authTempClient.RestoreAuthTemporary(token.Uid)).ToEither().ToAsync()
+				from authTemp in TryAsync(() => _authTempClient.RestoreAuthTemporary(token.Uid)).ToEither(e => e.Exception.IfNone(new Exception(e.Message)))
 				from _ in (authTemp.State == json.State)
 					? RightAsync<Exception, Unit>(Unit.Default)
 					: LeftAsync<Exception, Unit>(new Exception("State is not matched"))
-				from lineIdentity in TryAsync(() => _lineService.GetLineIdentify(json.Code, authTemp.Nonce)).ToEither().ToAsync()
-				from customToken in TryAsync(() => _firebaseService.CreateCustomToken(token.Uid, lineIdentity.Id, "line")).ToEither().ToAsync()
+				from lineIdentity in TryAsync(() => _lineService.GetLineIdentify(json.Code, authTemp.Nonce))
+					.ToEither(e => e.Exception.IfNone(new Exception(e.Message)))
+				from customToken in TryAsync(() => _firebaseService.CreateCustomToken(token.Uid, lineIdentity.Id, "line"))
+					.ToEither(e => e.Exception.IfNone(new Exception(e.Message)))
 				select customToken
 			).Case switch
 			{
