@@ -40,6 +40,7 @@ namespace Example.Function
 			});
 			var projectId = ((ServiceAccountCredential)adminApp.Options.Credential.UnderlyingCredential).ProjectId;
 			var firebaseAdminAuthHandler = new FirebaseAuthenticateHttpClientHandler(
+				// これだとRefresh出来ないからexpireしそう…
 				new AsyncLazy<string>(() => adminApp.Options.Credential.UnderlyingCredential.GetAccessTokenForRequestAsync())
 			);
 
