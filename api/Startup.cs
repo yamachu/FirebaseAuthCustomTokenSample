@@ -69,7 +69,7 @@ namespace Example.Function
 
 			builder.Services.AddSingleton<ILineClient, LineClient>();
 			builder.Services.AddSingleton<IAuthTemporaryClient, AuthTemporaryFirestoreClient>();
-			builder.Services.AddSingleton<ICustomProviderRepositoryClient, CustomProviderRepositoryClient>();
+			builder.Services.AddSingleton<ICustomProviderRepositoryClient, CustomProviderRepositoryFirestoreClient>();
 
 			builder.Services.AddTransient<ILineService, LineService>();
 			builder.Services.AddTransient<IFirebaseService, FirebaseService>();
