@@ -54,4 +54,33 @@ namespace Example.Function.Infrastructures
 			var customProviderReponse = await _client.PatchAsync($"users/{userId}/providers/{provider}", customProviderJsonContent).ConfigureAwait(false);
 		}
 	}
+
+	public class CustomProviderRepositoryFirestoreClient : ICustomProviderRepositoryClient
+	{
+		private readonly IFirestoreProvider _firestoreProvider;
+
+		public CustomProviderRepositoryFirestoreClient(IFirestoreProvider firestoreProvider)
+		{
+			_firestoreProvider = firestoreProvider;
+		}
+
+		public async Task<CustomProviderDocument> FetchFirebaseUidByCustomProviderId(string customProviderId, string provider)
+		{
+			var doc = _firestoreProvider.Instance.Document($"providers/{provider}/entries/{customProviderId}");
+			var snapshot = await doc.GetSnapshotAsync();
+			if (!snapshot.Exists)
+			{
+				return null;
+			}
+			return snapshot.ConvertTo<CustomProviderDocument>();
+		}
+
+		public async Task StoreCustomProviderId(string userId, CustomProviderDocument customProviderDoc, string provider)
+		{
+			await _firestoreProvider.Instance.Document($"providers/{provider}/entries/{customProviderDoc.Id}")
+				.SetAsync(new CustomProviderDocument { Id = userId }).ConfigureAwait(false);
+			await _firestoreProvider.Instance.Document($"users/{userId}/providers/{provider}")
+				.SetAsync(customProviderDoc).ConfigureAwait(false);
+		}
+	}
 }

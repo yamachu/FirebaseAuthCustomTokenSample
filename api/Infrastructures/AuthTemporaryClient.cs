@@ -48,4 +48,29 @@ namespace Example.Function.Infrastructures
 			await _client.PatchAsync($"{AuthTempKey}/{userId}", content).ConfigureAwait(false);
 		}
 	}
+
+	public class AuthTemporaryFirestoreClient : IAuthTemporaryClient
+	{
+		private readonly IFirestoreProvider _firestoreProvider;
+
+		private const string AuthTempKey = "authtemp";
+
+		public AuthTemporaryFirestoreClient(IFirestoreProvider firestoreProvider)
+		{
+			_firestoreProvider = firestoreProvider;
+		}
+
+		public async Task<AuthTemporary> RestoreAuthTemporary(string userId)
+		{
+			var doc = _firestoreProvider.Instance.Document($"{AuthTempKey}/{userId}");
+			var snapshot = await doc.GetSnapshotAsync();
+			return snapshot.ConvertTo<AuthTemporary>();
+		}
+
+		public async Task StoreAuthTemporary(string userId, AuthTemporary authTemp)
+		{
+			var doc = _firestoreProvider.Instance.Document($"{AuthTempKey}/{userId}");
+			await doc.SetAsync(authTemp);
+		}
+	}
 }
