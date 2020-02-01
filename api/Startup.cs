@@ -8,6 +8,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Firestore;
+using Google.Cloud.Firestore.V1;
+using Grpc.Auth;
+using Grpc.Core;
 using Example.Function.Configurations;
 using Example.Function.Helpers;
 using Example.Function.Infrastructures;
@@ -34,15 +38,19 @@ namespace Example.Function
 			var resourceName = "Resources.firebase-adminsdk.json";
 
 			using var stream = assembly.GetManifestResourceStream($"{assembly.GetName().Name}.{resourceName}");
+			var credential = GoogleCredential.FromStream(stream);
 			var adminApp = FirebaseApp.Create(new AppOptions()
 			{
-				Credential = GoogleCredential.FromStream(stream)
+				Credential = credential
 			});
 			var projectId = ((ServiceAccountCredential)adminApp.Options.Credential.UnderlyingCredential).ProjectId;
 			var firebaseAdminAuthHandler = new FirebaseAuthenticateHttpClientHandler(
 				// これだとRefresh出来ないからexpireしそう…
 				new AsyncLazy<string>(() => adminApp.Options.Credential.UnderlyingCredential.GetAccessTokenForRequestAsync())
 			);
+			// should shutdown?
+			var channel = new Channel(FirestoreClient.DefaultEndpoint.Host, FirestoreClient.DefaultEndpoint.Port, credential.ToChannelCredentials());
+			var firestoreDb = FirestoreDb.Create(projectId, FirestoreClient.Create(channel));
 
 			builder.Services.AddHttpClient(nameof(AuthTemporaryClient), c =>
 			{
@@ -60,11 +68,13 @@ namespace Example.Function
 			builder.Services.AddSingleton<IConfiguration>(config);
 
 			builder.Services.AddSingleton<ILineClient, LineClient>();
-			builder.Services.AddSingleton<IAuthTemporaryClient, AuthTemporaryClient>();
+			builder.Services.AddSingleton<IAuthTemporaryClient, AuthTemporaryFirestoreClient>();
 			builder.Services.AddSingleton<ICustomProviderRepositoryClient, CustomProviderRepositoryClient>();
 
 			builder.Services.AddTransient<ILineService, LineService>();
 			builder.Services.AddTransient<IFirebaseService, FirebaseService>();
+
+			builder.Services.AddSingleton<IFirestoreProvider>(new FirestoreProvider(firestoreDb));
 
 			builder.Services
 				.AddOptions<LineConfig>()
