@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
@@ -75,6 +76,8 @@ namespace Example.Function
 
 			builder.Services.AddTransient<ILineService, LineService>();
 			builder.Services.AddTransient<IFirebaseService, FirebaseService>();
+
+			builder.Services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
 
 			builder.Services
 				.AddOptions<LineConfig>()

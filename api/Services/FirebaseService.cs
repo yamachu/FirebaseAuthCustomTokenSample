@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Example.Function.DataObjects;
 using Example.Function.Infrastructures;
+using Microsoft.Extensions.Logging;
 using FirebaseAdmin.Auth;
 
 namespace Example.Function.Services
@@ -16,10 +17,12 @@ namespace Example.Function.Services
 	public class FirebaseService : IFirebaseService
 	{
 		private readonly ICustomProviderRepositoryClient _repositoryClient;
+		private readonly ILogger<FirebaseService> _logger;
 
-		public FirebaseService(ICustomProviderRepositoryClient repositoryClient)
+		public FirebaseService(ICustomProviderRepositoryClient repositoryClient, ILogger<FirebaseService> logger)
 		{
 			_repositoryClient = repositoryClient;
+			_logger = logger;
 		}
 
 		public async Task<string> CreateCustomToken(string firebaseUid, string customId, string provider)
