@@ -68,13 +68,13 @@ namespace Example.Function
 			builder.Services.AddSingleton<IConfiguration>(config);
 
 			builder.Services.AddSingleton<ILineClient, LineClient>();
-			builder.Services.AddSingleton<IAuthTemporaryClient, AuthTemporaryFirestoreClient>();
-			builder.Services.AddSingleton<ICustomProviderRepositoryClient, CustomProviderRepositoryFirestoreClient>();
+			builder.Services.AddSingleton<IAuthTemporaryClient, AuthTemporaryFirestoreClient>(
+				_ => new AuthTemporaryFirestoreClient(firestoreDb));
+			builder.Services.AddSingleton<ICustomProviderRepositoryClient, CustomProviderRepositoryFirestoreClient>(
+				_ => new CustomProviderRepositoryFirestoreClient(firestoreDb));
 
 			builder.Services.AddTransient<ILineService, LineService>();
 			builder.Services.AddTransient<IFirebaseService, FirebaseService>();
-
-			builder.Services.AddSingleton<IFirestoreProvider>(new FirestoreProvider(firestoreDb));
 
 			builder.Services
 				.AddOptions<LineConfig>()
